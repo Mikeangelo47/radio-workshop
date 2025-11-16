@@ -47,6 +47,11 @@ app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/palm', palmRoutes);
 app.use('/api/v1/store', storeRoutes);
 
+// Legacy API routes for web-admin compatibility
+app.use('/api/orders', storeRoutes);
+app.use('/api/products', storeRoutes);
+app.use('/api/palm-devices', palmRoutes);
+
 // 404 handler for API routes only
 app.use('/api', (req, res) => {
   res.status(404).json({ error: 'Route not found' });
