@@ -615,3 +615,40 @@
     </script>
 </body>
 </html>
+|| [];
+                renderUsers();
+            } catch (error) {
+                console.error('Error loading users:', error);
+            }
+        }
+
+        function renderUsers() {
+            const list = document.getElementById('users-list');
+            if (users.length === 0) {
+                list.innerHTML = '<div class="empty-state">No users registered</div>';
+                return;
+            }
+            list.innerHTML = users.map(u => `
+                <div class="order-card">
+                    <h3>${u.displayName}</h3>
+                    <p style="color: #999;">${u.email || 'No email'}</p>
+                </div>
+            `).join('');
+        }
+
+        function updateStats() {
+            document.getElementById('stat-products').textContent = products.length;
+            document.getElementById('stat-orders').textContent = orders.length;
+            document.getElementById('stat-pending').textContent = orders.filter(o => o.status === 'pending').length;
+            document.getElementById('stat-completed').textContent = orders.filter(o => o.status === 'completed').length;
+            
+            const revenue = orders
+                .filter(o => o.status === 'completed')
+                .reduce((sum, o) => sum + parseFloat(o.totalAmount), 0);
+            document.getElementById('stat-revenue').textContent = revenue.toFixed(2);
+        }
+
+        setInterval(loadAllData, 5000);
+    </script>
+</body>
+</html>
