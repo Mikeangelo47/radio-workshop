@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Palm Auth Admin Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+        }
+        
+        .user-list, .card-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .user-item {
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .user-item:hover {
+            background: #f8f9fa;
+        }
+        
+        .user-item.selected {
+            background: #e8eaf6;
+            border-left: 4px solid #667eea;
+        }
+        
+        .user-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .user-id {
+            font-size: 0.85em;
+            color: #999;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .card-item {
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background: #fafafa;
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        
+        .card-name {
+            font-weight: bold;
+        }
+        
+        .card-type {
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .loading, .empty-state {
+            text-align: center;
+            padding: 20px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌴 Palm Auth Admin Dashboard</h1>
+        
+        <div class="alert" id="alert"></div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalUsers">0</div>
+                <div class="stat-label">Total Users</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalCards">0</div>
+                <div class="stat-label">Total Cards</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalScans">0</div>
+                <div class="stat-label">Total Scans</div>
+            </div>
+        </div>
+        
+        <div class="cards-grid">
+            <div class="card">
+                <h2>👥 Users</h2>
+                <div class="user-list" id="userList">
+                    <div class="loading">Loading users...</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>🎴 User Cards</h2>
+                <div class="card-list" id="cardList">
+                    <div class="empty-state">Select a user to view their cards</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>➕ Create New Card</h2>
+                <form id="cardForm">
+                    <div class="form-group">
+                        <label>User *</label>
+                        <select id="cardUserId" required>
+                            <option value="">Select a user</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Card Type *</label>
+                        <select id="cardType" required>
+                            <option value="membership">Membership</option>
+                            <option value="loyalty">Loyalty</option>
+                            <option value="gift">Gift Card</option>
+                            <option value="id">ID Card</option>
+                            <option value="access">Access Card</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Card Name * (e.g., Four Seasons Gym)</label>
+                        <input type="text" id="cardName" required placeholder="Enter card name">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Card Number *</label>
+                        <input type="text" id="cardNumber" required placeholder="Enter card number">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Barcode Data (optional)</label>
+                        <input type="text" id="barcodeData" placeholder="Barcode data">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Color *</label>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="color" id="cardColor" value="#667eea" required style="width: 60px; height: 40px; cursor: pointer;">
+                            <input type="text" id="colorText" value="#667eea" readonly style="width: 100px; font-family: monospace;">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Notes (optional)</label>
+                        <textarea id="cardNotes" placeholder="Additional notes"></textarea>
+                    </div>
+                    
+                    <button type="submit">Create Card</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const API_BASE = window.location.origin + '/api/v1';
+        let selectedUserId = null;
+        let allUsers = [];
+        
+        async function loadDashboard() {
+            await loadUsers();
+            updateStats();
+        }
+        
+        async function loadUsers() {
+            try {
+                const response = await fetch(`${API_BASE}/palm/verify`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sdkVendor: 'veinshine', featureVersion: '1.0' })
+                });
+                
+                const data = await response.json();
+                allUsers = data.templates.map(t => t.user);
+                
+                renderUserList();
+                populateUserSelect();
+            } catch (error) {
+                showAlert('Failed to load users: ' + error.message, 'error');
+            }
+        }
+        
+        function renderUserList() {
+            const userList = document.getElementById('userList');
+            
+            if (allUsers.length === 0) {
+                userList.innerHTML = '<div class="empty-state">No users found</div>';
+                return;
+            }
+            
+            userList.innerHTML = allUsers.map(user => `
+                <div class="user-item" onclick="selectUser('${user.id}')">
+                    <div class="user-name">${user.displayName}</div>
+                    <div class="user-id">${user.id}</div>
+                </div>
+            `).join('');
+        }
+        
+        function populateUserSelect() {
+            const select = document.getElementById('cardUserId');
+            select.innerHTML = '<option value="">Select a user</option>' +
+                allUsers.map(user => `
+                    <option value="${user.id}">${user.displayName}</option>
+                `).join('');
+        }
+        
+        async function selectUser(userId) {
+            selectedUserId = userId;
+            
+            document.querySelectorAll('.user-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            event.target.closest('.user-item').classList.add('selected');
+            
+            await loadUserCards(userId);
+        }
+        
+        async function loadUserCards(userId) {
+            const cardList = document.getElementById('cardList');
+            cardList.innerHTML = '<div class="loading">Loading cards...</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/users/${userId}/cards`);
+                const data = await response.json();
+                
+                if (data.cards.length === 0) {
+                    cardList.innerHTML = '<div class="empty-state">No cards for this user</div>';
+                    return;
+                }
+                
+                cardList.innerHTML = data.cards.map(card => `
+                    <div class="card-item">
+                        <div class="card-header">
+                            <span class="card-name">${card.name}</span>
+                            <span class="card-type">${card.type}</span>
+                        </div>
+                        <div style="font-family: monospace;">${card.cardNumber}</div>
+                        ${card.notes ? `<div style="margin-top: 8px; color: #666;">${card.notes}</div>` : ''}
+                    </div>
+                `).join('');
+            } catch (error) {
+                cardList.innerHTML = '<div class="empty-state">Failed to load cards</div>';
+            }
+        }
+        
+        async function updateStats() {
+            document.getElementById('totalUsers').textContent = allUsers.length;
+            
+            let totalCards = 0;
+            let totalScans = 0;
+            
+            for (const user of allUsers) {
+                try {
+                    const cardsRes = await fetch(`${API_BASE}/users/${user.id}/cards`);
+                    const cardsData = await cardsRes.json();
+                    totalCards += cardsData.cards.length;
+                    
+                    const logsRes = await fetch(`${API_BASE}/users/${user.id}/auth-history?limit=1000`);
+                    const logsData = await logsRes.json();
+                    totalScans += logsData.logs.length;
+        }
+            
+        userList.innerHTML = allUsers.map(user => `
+            <div class="user-item" onclick="selectUser('${user.id}')">
+                <div class="user-name">${user.displayName}</div>
+                <div class="user-id">${user.id}</div>
+            </div>
+        `).join('');
+    }
+        
+    function populateUserSelect() {
+        const select = document.getElementById('cardUserId');
+        select.innerHTML = '<option value="">Select a user</option>' +
+            allUsers.map(user => `
+                <option value="${user.id}">${user.displayName}</option>
+            `).join('');
+    }
+        
+    async function selectUser(userId) {
+        selectedUserId = userId;
+                showAlert('Please select a user', 'error');
+                return;
+            }
+            
+            const cardData = {
+                type: document.getElementById('cardType').value,
+                name: document.getElementById('cardName').value,
+                cardNumber: document.getElementById('cardNumber').value,
+                barcodeData: document.getElementById('barcodeData').value || null,
+                color: document.getElementById('cardColor').value,
+                notes: document.getElementById('cardNotes').value || null
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE}/users/${userId}/cards`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(cardData)
+                });
+                
+                if (!response.ok) throw new Error('Failed to create card');
+                
+                showAlert(`✓ Card "${cardData.name}" created successfully!`, 'success');
+                
+                e.target.reset();
+                document.getElementById('cardColor').value = '#667eea';
+                
+                updateStats();
+                
+                if (selectedUserId === userId) {
+                    await loadUserCards(userId);
+                }
+            } catch (error) {
+                showAlert('Failed to create card: ' + error.message, 'error');
+            }
+        });
+        
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            alert.textContent = message;
+            alert.className = `alert ${type}`;
+            alert.style.display = 'block';
+            
+            setTimeout(() => {
+                alert.style.display = 'none';
+            }, 5000);
+        }
+        
+        loadDashboard();
+    </script>
+</body>
+</html>
