@@ -23,7 +23,6 @@ model User {
   apiTokens          ApiToken[]
   authenticationLogs AuthenticationLog[]
   cards              Card[]
-  orders             Order[]
   
   @@map("users")
 }
@@ -98,8 +97,8 @@ model ApiToken {
 model AuthenticationLog {
   id           String   @id @default(uuid())
   userId       String   @map("user_id")
-  deviceType   String   @map("device_type")
-  location     String?
+  deviceType   String   @map("device_type") // "android" or "ios"
+  location     String?  // Optional location info
   success      Boolean  @default(true)
   authenticatedAt DateTime @default(now()) @map("authenticated_at")
   
@@ -113,11 +112,11 @@ model AuthenticationLog {
 model Card {
   id          String   @id @default(uuid())
   userId      String   @map("user_id")
-  type        String
-  name        String
+  type        String   // "gym", "loyalty", "transit", "membership", "other"
+  name        String   // e.g., "Gold's Gym", "Tesco Clubcard"
   cardNumber  String   @map("card_number")
-  barcodeData String?  @map("barcode_data") @db.Text
-  color       String   @default("#3B82F6")
+  barcodeData String?  @map("barcode_data") @db.Text // QR code or barcode data
+  color       String   @default("#3B82F6") // Hex color for UI
   notes       String?  @db.Text
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
@@ -126,73 +125,4 @@ model Card {
   
   @@index([userId])
   @@map("cards")
-}
-
-// NEW MODELS FOR STORE SYSTEM
-
-model Product {
-  id          String   @id @default(uuid())
-  name        String
-  description String?  @db.Text
-  price       Decimal  @db.Decimal(10, 2)
-  imageUrl    String?  @map("image_url") @db.Text
-  stock       Int      @default(0)
-  active      Boolean  @default(true)
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-  
-  orderItems  OrderItem[]
-  
-  @@map("products")
-}
-
-model Order {
-  id            String   @id @default(uuid())
-  customerId    String?  @map("customer_id")
-  customerName  String?  @map("customer_name")
-  status        String   @default("pending") // pending, completed, cancelled
-  totalAmount   Decimal  @db.Decimal(10, 2) @map("total_amount")
-  palmDeviceId  String?  @map("palm_device_id")
-  createdAt     DateTime @default(now()) @map("created_at")
-  completedAt   DateTime? @map("completed_at")
-  
-  customer      User?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
-  palmDevice    PalmDevice? @relation(fields: [palmDeviceId], references: [id], onDelete: SetNull)
-  items         OrderItem[]
-  
-  @@index([customerId])
-  @@index([status])
-  @@index([palmDeviceId])
-  @@index([createdAt])
-  @@map("orders")
-}
-
-model OrderItem {
-  id        String  @id @default(uuid())
-  orderId   String  @map("order_id")
-  productId String  @map("product_id")
-  quantity  Int     @default(1)
-  price     Decimal @db.Decimal(10, 2)
-  
-  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  
-  @@index([orderId])
-  @@index([productId])
-  @@map("order_items")
-}
-
-model PalmDevice {
-  id          String   @id @default(uuid())
-  name        String
-  apiToken    String   @unique @map("api_token")
-  location    String?
-  active      Boolean  @default(true)
-  lastSeenAt  DateTime @default(now()) @map("last_seen_at")
-  createdAt   DateTime @default(now()) @map("created_at")
-  
-  orders      Order[]
-  
-  @@index([apiToken])
-  @@map("palm_devices")
 }

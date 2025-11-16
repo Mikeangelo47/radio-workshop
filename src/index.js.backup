@@ -7,7 +7,6 @@ const path = require('path');
 
 const userRoutes = require('./routes/users');
 const palmRoutes = require('./routes/palm');
-const storeRoutes = require('./routes/store');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
@@ -45,7 +44,6 @@ app.get('/', (req, res) => {
 
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/palm', palmRoutes);
-app.use('/api/v1/store', storeRoutes);
 
 // 404 handler for API routes only
 app.use('/api', (req, res) => {
