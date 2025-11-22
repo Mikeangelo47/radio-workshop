@@ -12,6 +12,9 @@ router.post(
   userController.createUser
 );
 
+// Search user by displayName (for auth logging)
+router.get('/search/by-name', userController.searchUserByDisplayName);
+
 router.get('/:userId', userController.getUser);
 
 router.patch(

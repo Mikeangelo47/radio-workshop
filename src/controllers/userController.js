@@ -73,6 +73,44 @@ exports.getUser = async (req, res, next) => {
   }
 };
 
+exports.searchUserByDisplayName = async (req, res, next) => {
+  try {
+    const { displayName } = req.query;
+
+    if (!displayName) {
+      return res.status(400).json({
+        error: 'Bad Request',
+        message: 'displayName query parameter is required'
+      });
+    }
+
+    const user = await prisma.user.findFirst({
+      where: {
+        displayName: {
+          equals: displayName,
+          mode: 'insensitive'
+        }
+      },
+      select: {
+        id: true,
+        displayName: true,
+        email: true
+      }
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        error: 'Not Found',
+        message: 'User not found'
+      });
+    }
+
+    res.json({ user });
+  } catch (error) {
+    next(error);
+  }
+};
+
 exports.updateUser = async (req, res, next) => {
   try {
     const { userId } = req.params;
