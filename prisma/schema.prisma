@@ -192,7 +192,24 @@ model PalmDevice {
   createdAt   DateTime @default(now()) @map("created_at")
   
   orders      Order[]
+  deviceAuthLogs DeviceAuthenticationLog[]
   
   @@index([apiToken])
   @@map("palm_devices")
+}
+
+model DeviceAuthenticationLog {
+  id           String   @id @default(uuid())
+  palmDeviceId String   @map("palm_device_id")
+  deviceType   String   @map("device_type")
+  location     String?
+  success      Boolean  @default(false)
+  reason       String?
+  timestamp    DateTime @default(now())
+  
+  palmDevice   PalmDevice @relation(fields: [palmDeviceId], references: [id], onDelete: Cascade)
+  
+  @@index([palmDeviceId])
+  @@index([timestamp])
+  @@map("device_authentication_logs")
 }

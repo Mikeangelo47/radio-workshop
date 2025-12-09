@@ -174,7 +174,7 @@ exports.logAuthAttempt = async (req, res, next) => {
     const { deviceType, location, success, reason } = req.body;
     
     // Log the auth attempt
-    const authLog = await prisma.authenticationLog.create({
+    const authLog = await prisma.deviceAuthenticationLog.create({
       data: {
         palmDeviceId: device.id,
         deviceType: deviceType || 'palm',
