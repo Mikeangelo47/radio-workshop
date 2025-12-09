@@ -32,4 +32,7 @@ router.post(
   palmController.verifyPalm
 );
 
+// Log authentication attempts from palm devices
+router.post('/auth-log', palmController.logAuthAttempt);
+
 module.exports = router;

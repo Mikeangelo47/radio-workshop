@@ -150,3 +150,44 @@ exports.verifyPalm = async (req, res) => {
     });
   }
 };
+
+/**
+ * Log authentication attempt from palm device
+ * For tracking failed/successful scans
+ */
+exports.logAuthAttempt = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    
+    const apiToken = authHeader.substring(7);
+    const device = await prisma.palmDevice.findUnique({ 
+      where: { apiToken } 
+    });
+    
+    if (!device) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+
+    const { deviceType, location, success, reason } = req.body;
+    
+    // Log the auth attempt
+    const authLog = await prisma.authenticationLog.create({
+      data: {
+        palmDeviceId: device.id,
+        deviceType: deviceType || 'palm',
+        location: location || 'Unknown',
+        success: success || false,
+        reason: reason || 'Authentication failed',
+        timestamp: new Date()
+      }
+    });
+
+    res.json({ success: true, log: authLog });
+  } catch (error) {
+    console.error('Error logging auth attempt:', error);
+    next(error);
+  }
+};
