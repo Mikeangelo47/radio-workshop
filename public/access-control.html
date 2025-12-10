@@ -1,1 +1,729 @@
-404: Not Found
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Access Control - Admin Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            color: white;
+            font-size: 2.5em;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        
+        .nav-link:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .stat-card.success .stat-value { color: #10b981; }
+        .stat-card.danger .stat-value { color: #ef4444; }
+        .stat-card.warning .stat-value { color: #f59e0b; }
+        .stat-card.info .stat-value { color: #3b82f6; }
+        
+        .main-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .filters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+            padding-bottom: 25px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        label {
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }
+        
+        input, select {
+            padding: 10px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 0.95em;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .time-schedule {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .schedule-card {
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #e5e7eb;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .schedule-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+        
+        .schedule-card.active {
+            border-color: #667eea;
+            background: #f3f4f6;
+        }
+        
+        .schedule-label {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .schedule-time {
+            font-size: 0.85em;
+            color: #666;
+        }
+        
+        .logs-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .logs-table thead {
+            background: #f9fafb;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        
+        .logs-table th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .logs-table td {
+            padding: 15px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        
+        .logs-table tbody tr {
+            transition: background 0.2s;
+        }
+        
+        .logs-table tbody tr:hover {
+            background: #f9fafb;
+        }
+        
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            display: inline-block;
+        }
+        
+        .status-badge.on-time {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .status-badge.early {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .status-badge.late {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .status-badge.unauthorized {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .status-badge.after-hours {
+            background: #f3e8ff;
+            color: #6b21a8;
+        }
+        
+        .status-badge.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .status-badge.failed {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .user-name {
+            font-weight: 600;
+            color: #111827;
+        }
+        
+        .user-email {
+            font-size: 0.85em;
+            color: #6b7280;
+        }
+        
+        .device-info {
+            font-size: 0.85em;
+            color: #6b7280;
+        }
+        
+        .location {
+            font-size: 0.85em;
+            color: #6b7280;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #9ca3af;
+            font-size: 1.1em;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.1em;
+            color: #667eea;
+        }
+        
+        .export-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .export-btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 25px;
+        }
+        
+        .page-btn {
+            padding: 8px 15px;
+            border: 2px solid #e5e7eb;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .page-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+        
+        .page-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 Access Control Dashboard</h1>
+            <div class="nav-links">
+                <a href="/admin.html" class="nav-link">Users & Cards</a>
+                <a href="/store.html" class="nav-link">Store Orders</a>
+                <a href="/access-control.html" class="nav-link">Access Logs</a>
+            </div>
+        </div>
+        
+        <!-- Statistics Cards -->
+        <div class="stats-grid">
+            <div class="stat-card success">
+                <div class="stat-label">Total Access Today</div>
+                <div class="stat-value" id="totalAccessToday">0</div>
+            </div>
+            <div class="stat-card success">
+                <div class="stat-label">Successful Access</div>
+                <div class="stat-value" id="successfulAccess">0</div>
+            </div>
+            <div class="stat-card danger">
+                <div class="stat-label">Failed Attempts</div>
+                <div class="stat-value" id="failedAccess">0</div>
+            </div>
+            <div class="stat-card warning">
+                <div class="stat-label">Late Arrivals</div>
+                <div class="stat-value" id="lateArrivals">0</div>
+            </div>
+        </div>
+        
+        <!-- Main Card with Filters and Logs -->
+        <div class="main-card">
+            <h2 style="margin-bottom: 25px; color: #111827;">Access Logs</h2>
+            
+            <!-- Time Schedule Presets -->
+            <div class="time-schedule">
+                <div class="schedule-card" data-schedule="on-time">
+                    <div class="schedule-label" style="color: #10b981;">✓ On Time</div>
+                    <div class="schedule-time">Before 9:00 AM</div>
+                </div>
+                <div class="schedule-card" data-schedule="late">
+                    <div class="schedule-label" style="color: #ef4444;">⚠ Late</div>
+                    <div class="schedule-time">After 9:00 AM</div>
+                </div>
+                <div class="schedule-card" data-schedule="after-hours">
+                    <div class="schedule-label" style="color: #8b5cf6;">🌙 After Hours</div>
+                    <div class="schedule-time">After 6:00 PM</div>
+                </div>
+            </div>
+            
+            <!-- Filters -->
+            <div class="filters">
+                <div class="filter-group">
+                    <label>From Date</label>
+                    <input type="date" id="dateFrom" />
+                </div>
+                <div class="filter-group">
+                    <label>To Date</label>
+                    <input type="date" id="dateTo" />
+                </div>
+                <div class="filter-group">
+                    <label>User</label>
+                    <select id="userFilter">
+                        <option value="">All Users</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Status</label>
+                    <select id="statusFilter">
+                        <option value="">All Status</option>
+                        <option value="success">Successful</option>
+                        <option value="failed">Failed</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Device</label>
+                    <select id="deviceFilter">
+                        <option value="">All Devices</option>
+                    </select>
+                </div>
+                <div class="filter-group" style="justify-content: flex-end;">
+                    <label>&nbsp;</label>
+                    <button class="export-btn" onclick="exportToCSV()">📥 Export CSV</button>
+                </div>
+            </div>
+            
+            <!-- Logs Table -->
+            <div id="logsContainer">
+                <div class="loading">Loading access logs...</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const API_URL = window.location.hostname === 'localhost' ? 
+            'http://localhost:3000/api/v1' : 
+            'https://palmauth-api-production.up.railway.app/api/v1';
+        
+        let allLogs = [];
+        let filteredLogs = [];
+        let currentPage = 1;
+        const logsPerPage = 50;
+        
+        // Time configuration for categorization
+        const TIME_CONFIG = {
+            onTimeThreshold: 9, // 9:00 AM
+            lateThreshold: 9,   // After 9:00 AM
+            afterHoursStart: 18 // After 6:00 PM
+        };
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            setDefaultDates();
+            await loadData();
+            setupEventListeners();
+        });
+        
+        function setDefaultDates() {
+            const today = new Date();
+            const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+            document.getElementById('dateFrom').valueAsDate = weekAgo;
+            document.getElementById('dateTo').valueAsDate = today;
+        }
+        
+        function setupEventListeners() {
+            ['dateFrom', 'dateTo', 'userFilter', 'statusFilter', 'deviceFilter'].forEach(id => {
+                document.getElementById(id).addEventListener('change', filterAndRenderLogs);
+            });
+            
+            document.querySelectorAll('.schedule-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    document.querySelectorAll('.schedule-card').forEach(c => c.classList.remove('active'));
+                    card.classList.add('active');
+                    filterBySchedule(card.dataset.schedule);
+                });
+            });
+        }
+        
+        async function loadData() {
+            try {
+                // Load authentication logs (user-based)
+                const authLogsRes = await fetch(`${API_URL}/users`);
+                const users = await authLogsRes.json();
+                
+                // Get auth logs for each user
+                let authLogs = [];
+                for (const user of users) {
+                    const userLogsRes = await fetch(`${API_URL}/users/${user.id}/auth-logs`);
+                    if (userLogsRes.ok) {
+                        const userLogs = await userLogsRes.json();
+                        authLogs = authLogs.concat(userLogs.map(log => ({
+                            ...log,
+                            userName: user.displayName,
+                            userEmail: user.email,
+                            type: 'user',
+                            timestamp: log.authenticatedAt
+                        })));
+                    }
+                }
+                
+                // Load device authentication logs (failed attempts)
+                const deviceLogsRes = await fetch(`${API_URL}/palm/device-logs`);
+                let deviceLogs = [];
+                if (deviceLogsRes.ok) {
+                    deviceLogs = await deviceLogsRes.json();
+                    deviceLogs = deviceLogs.map(log => ({
+                        ...log,
+                        userName: 'Unknown',
+                        userEmail: null,
+                        type: 'device'
+                    }));
+                }
+                
+                // Combine all logs
+                allLogs = [...authLogs, ...deviceLogs].sort((a, b) => 
+                    new Date(b.timestamp) - new Date(a.timestamp)
+                );
+                
+                populateFilters(users);
+                filterAndRenderLogs();
+                updateStatistics();
+            } catch (error) {
+                console.error('Error loading logs:', error);
+                document.getElementById('logsContainer').innerHTML = 
+                    '<div class="no-data">Error loading logs. Please try again.</div>';
+            }
+        }
+        
+        function populateFilters(users) {
+            const userFilter = document.getElementById('userFilter');
+            users.forEach(user => {
+                const option = document.createElement('option');
+                option.value = user.id;
+                option.textContent = user.displayName;
+                userFilter.appendChild(option);
+            });
+            
+            // Populate device filter
+            const devices = [...new Set(allLogs.map(log => log.location).filter(Boolean))];
+            const deviceFilter = document.getElementById('deviceFilter');
+            devices.forEach(device => {
+                const option = document.createElement('option');
+                option.value = device;
+                option.textContent = device;
+                deviceFilter.appendChild(option);
+            });
+        }
+        
+        function filterBySchedule(schedule) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            filteredLogs = allLogs.filter(log => {
+                const category = categorizeByTime(new Date(log.timestamp));
+                return category === schedule;
+            });
+            
+            renderLogs();
+        }
+        
+        function filterAndRenderLogs() {
+            const dateFrom = new Date(document.getElementById('dateFrom').value);
+            const dateTo = new Date(document.getElementById('dateTo').value);
+            dateTo.setHours(23, 59, 59, 999);
+            
+            const userId = document.getElementById('userFilter').value;
+            const status = document.getElementById('statusFilter').value;
+            const device = document.getElementById('deviceFilter').value;
+            
+            filteredLogs = allLogs.filter(log => {
+                const logDate = new Date(log.timestamp);
+                
+                if (logDate < dateFrom || logDate > dateTo) return false;
+                if (userId && log.userId !== userId) return false;
+                if (status && (log.success ? 'success' : 'failed') !== status) return false;
+                if (device && log.location !== device) return false;
+                
+                return true;
+            });
+            
+            currentPage = 1;
+            renderLogs();
+            updateStatistics();
+        }
+        
+        function categorizeByTime(timestamp) {
+            const date = new Date(timestamp);
+            const hour = date.getHours();
+            
+            if (hour < TIME_CONFIG.onTimeThreshold) {
+                return 'on-time';
+            } else if (hour < TIME_CONFIG.lateThreshold + 1) {
+                return 'late';
+            } else if (hour >= TIME_CONFIG.afterHoursStart) {
+                return 'after-hours';
+            } else {
+                return 'on-time';
+            }
+        }
+        
+        function renderLogs() {
+            const container = document.getElementById('logsContainer');
+            
+            if (filteredLogs.length === 0) {
+                container.innerHTML = '<div class="no-data">No access logs found for the selected filters.</div>';
+                return;
+            }
+            
+            const startIdx = (currentPage - 1) * logsPerPage;
+            const endIdx = startIdx + logsPerPage;
+            const logsToShow = filteredLogs.slice(startIdx, endIdx);
+            
+            const table = `
+                <table class="logs-table">
+                    <thead>
+                        <tr>
+                            <th>Date & Time</th>
+                            <th>User</th>
+                            <th>Status</th>
+                            <th>Time Category</th>
+                            <th>Device</th>
+                            <th>Location</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${logsToShow.map(log => {
+                            const timestamp = new Date(log.timestamp);
+                            const category = categorizeByTime(timestamp);
+                            const success = log.success ?? false;
+                            
+                            return `
+                                <tr>
+                                    <td>${formatDateTime(timestamp)}</td>
+                                    <td>
+                                        <div class="user-name">${log.userName || 'Unknown'}</div>
+                                        ${log.userEmail ? `<div class="user-email">${log.userEmail}</div>` : ''}
+                                    </td>
+                                    <td><span class="status-badge ${success ? 'success' : 'failed'}">
+                                        ${success ? '✓ Success' : '✗ Failed'}
+                                    </span></td>
+                                    <td><span class="status-badge ${category}">
+                                        ${getCategoryLabel(category)}
+                                    </span></td>
+                                    <td><span class="device-info">${log.deviceType || 'N/A'}</span></td>
+                                    <td><span class="location">${log.location || 'N/A'}</span></td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+                ${renderPagination()}
+            `;
+            
+            container.innerHTML = table;
+        }
+        
+        function getCategoryLabel(category) {
+            const labels = {
+                'on-time': '✓ On Time',
+                'late': '⚠ Late',
+                'after-hours': '🌙 After Hours',
+                'early': '🌅 Early'
+            };
+            return labels[category] || category;
+        }
+        
+        function formatDateTime(date) {
+            return date.toLocaleString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+        
+        function renderPagination() {
+            const totalPages = Math.ceil(filteredLogs.length / logsPerPage);
+            if (totalPages <= 1) return '';
+            
+            let pagination = '<div class="pagination">';
+            
+            for (let i = 1; i <= totalPages; i++) {
+                pagination += `<button class="page-btn ${i === currentPage ? 'active' : ''}" 
+                    onclick="changePage(${i})">${i}</button>`;
+            }
+            
+            pagination += '</div>';
+            return pagination;
+        }
+        
+        function changePage(page) {
+            currentPage = page;
+            renderLogs();
+        }
+        
+        function updateStatistics() {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            const todayLogs = filteredLogs.filter(log => {
+                const logDate = new Date(log.timestamp);
+                logDate.setHours(0, 0, 0, 0);
+                return logDate.getTime() === today.getTime();
+            });
+            
+            const successful = filteredLogs.filter(log => log.success).length;
+            const failed = filteredLogs.filter(log => !log.success).length;
+            const late = filteredLogs.filter(log => categorizeByTime(new Date(log.timestamp)) === 'late').length;
+            
+            document.getElementById('totalAccessToday').textContent = todayLogs.length;
+            document.getElementById('successfulAccess').textContent = successful;
+            document.getElementById('failedAccess').textContent = failed;
+            document.getElementById('lateArrivals').textContent = late;
+        }
+        
+        function exportToCSV() {
+            const headers = ['Date', 'Time', 'User', 'Email', 'Status', 'Time Category', 'Device', 'Location'];
+            const rows = filteredLogs.map(log => {
+                const timestamp = new Date(log.timestamp);
+                const category = categorizeByTime(timestamp);
+                return [
+                    timestamp.toLocaleDateString(),
+                    timestamp.toLocaleTimeString(),
+                    log.userName || 'Unknown',
+                    log.userEmail || 'N/A',
+                    log.success ? 'Success' : 'Failed',
+                    getCategoryLabel(category),
+                    log.deviceType || 'N/A',
+                    log.location || 'N/A'
+                ];
+            });
+            
+            const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `access-logs-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+        }
+    </script>
+</body>
+</html>
