@@ -4,6 +4,25 @@ const jwt = require('jsonwebtoken');
 
 const prisma = new PrismaClient();
 
+exports.getAllUsers = async (req, res, next) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        displayName: true,
+        email: true,
+        createdAt: true
+      },
+      orderBy: {
+        displayName: 'asc'
+      }
+    });
+    res.json(users);
+  } catch (error) {
+    next(error);
+  }
+};
+
 exports.createUser = async (req, res, next) => {
   try {
     const errors = validationResult(req);
