@@ -155,6 +155,49 @@ exports.verifyPalm = async (req, res) => {
  * Log authentication attempt from palm device
  * For tracking failed/successful scans
  */
+/**
+ * Get all device authentication logs
+ */
+exports.getDeviceLogs = async (req, res, next) => {
+  try {
+    const logs = await prisma.deviceAuthenticationLog.findMany({
+      include: {
+        palmDevice: {
+          select: {
+            name: true,
+            location: true
+          }
+        }
+      },
+      orderBy: {
+        timestamp: 'desc'
+      },
+      take: 1000 // Limit to last 1000 logs
+    });
+    
+    // Format logs for frontend
+    const formattedLogs = logs.map(log => ({
+      id: log.id,
+      deviceType: log.deviceType,
+      location: log.palmDevice?.location || log.location,
+      success: log.success,
+      reason: log.reason,
+      timestamp: log.timestamp,
+      palmDeviceId: log.palmDeviceId,
+      deviceName: log.palmDevice?.name
+    }));
+    
+    res.json(formattedLogs);
+  } catch (error) {
+    console.error('Error fetching device logs:', error);
+    next(error);
+  }
+};
+
+/**
+ * Log authentication attempt from palm device
+ * For tracking failed/successful scans
+ */
 exports.logAuthAttempt = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;

@@ -35,4 +35,7 @@ router.post(
 // Log authentication attempts from palm devices
 router.post('/auth-log', palmController.logAuthAttempt);
 
+// Get all device authentication logs
+router.get('/device-logs', palmController.getDeviceLogs);
+
 module.exports = router;
