@@ -8,6 +8,7 @@ const path = require('path');
 const userRoutes = require('./routes/users');
 const palmRoutes = require('./routes/palm');
 const storeRoutes = require('./routes/store');
+const authRoutes = require('./routes/auth');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
@@ -46,11 +47,15 @@ app.get('/', (req, res) => {
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/palm', palmRoutes);
 app.use('/api/v1/store', storeRoutes);
+app.use('/api/v1/auth', authRoutes);
 
 // Legacy API routes for web-admin compatibility
 app.use('/api/orders', storeRoutes);
 app.use('/api/products', storeRoutes);
+app.use('/api/verifications', storeRoutes);  // Campaign verifications - same pattern as orders
 app.use('/api/palm-devices', palmRoutes);
+app.use('/api/palm', storeRoutes);  // Palm device order completion
+app.use('/api/redemptions', storeRoutes);  // Redemption history
 
 // 404 handler for API routes only
 app.use('/api', (req, res) => {
