@@ -43,9 +43,19 @@ router.post(
 
 router.get('/:userId/auth-history', userController.getAuthenticationHistory);
 
-// Card routes
+// Campaign card routes (must be before generic card routes)
+const userCardController = require('../controllers/userCardController');
+
 router.post(
   '/:userId/cards',
+  (req, res, next) => {
+    // If request has campaignId, use campaign card controller
+    if (req.body.campaignId) {
+      return userCardController.addCardToWallet(req, res, next);
+    }
+    // Otherwise continue to generic card validation
+    next();
+  },
   [
     body('type').notEmpty().isString().isIn(['gym', 'loyalty', 'transit', 'membership', 'other']),
     body('name').notEmpty().trim().isLength({ min: 1, max: 100 }),
@@ -57,7 +67,7 @@ router.post(
   userController.createCard
 );
 
-router.get('/:userId/cards', userController.getUserCards);
+router.get('/:userId/cards', userCardController.getUserCards);
 
 router.patch(
   '/cards/:cardId',

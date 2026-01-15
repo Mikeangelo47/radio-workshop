@@ -15,33 +15,7 @@ exports.getUserCards = async (req, res, next) => {
     });
 
     // Format response to match iOS app expectations
-    const formattedCards = cards.map(card => ({
-      id: card.id,
-      userId: card.userId,
-      campaignId: card.campaignId,
-      cardName: card.cardName,
-      cardDescription: card.cardDescription,
-      cardImageUrl: card.cardImageUrl,
-      backgroundColor: card.backgroundColor,
-      textColor: card.textColor,
-      active: card.active,
-      addedAt: card.addedAt.toISOString(),
-      lastUsedAt: card.lastUsedAt ? card.lastUsedAt.toISOString() : null,
-      campaign: {
-        id: card.campaignId,
-        name: card.cardName,
-        description: card.cardDescription,
-        discountType: card.discountType,
-        discountValue: card.discountValue,
-        vendor: {
-          name: card.vendorName,
-          logo: card.vendorLogo
-        }
-      },
-      _count: {
-        redemptions: 0 // TODO: Count actual redemptions
-      }
-    }));
+    const formattedCards = cards.map(card => formatUserCard(card));
 
     res.json({ cards: formattedCards });
   } catch (error) {
@@ -149,6 +123,12 @@ function formatUserCard(card) {
       id: card.campaignId,
       name: card.cardName,
       description: card.cardDescription,
+      type: 'loyalty',
+      imageUrl: card.cardImageUrl,
+      backgroundColor: card.backgroundColor,
+      textColor: card.textColor,
+      startDate: card.addedAt.toISOString(),
+      endDate: null,
       discountType: card.discountType,
       discountValue: card.discountValue,
       vendor: {
