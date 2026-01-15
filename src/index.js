@@ -9,6 +9,7 @@ const crypto = require('crypto');
 // Routes
 const userRoutes = require('./routes/users');
 const userCardRoutes = require('./routes/userCards');
+const campaignRoutes = require('./routes/campaigns');
 const palmRoutes = require('./routes/palm');
 const storeRoutes = require('./routes/store');
 const authRoutes = require('./routes/auth');
@@ -97,6 +98,7 @@ app.use('/.well-known', oauthRoutes);
 // API v1 routes
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/users', userCardRoutes);  // Campaign card routes (same base path)
+app.use('/api/v1', campaignRoutes);  // Campaign resolution routes (/api/v1/q/:token)
 app.use('/api/v1/palm', palmRoutes);
 app.use('/api/v1/store', storeRoutes);
 app.use('/api/v1/auth', authLimiter, authRoutes);
