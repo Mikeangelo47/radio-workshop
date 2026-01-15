@@ -284,3 +284,20 @@ exports.deleteCard = async (req, res, next) => {
     next(error);
   }
 };
+
+// Get user redemptions
+exports.getUserRedemptions = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+
+    const redemptions = await prisma.redemption.findMany({
+      where: { userId },
+      orderBy: { redeemedAt: 'desc' },
+      take: 50
+    });
+
+    res.json({ redemptions });
+  } catch (error) {
+    next(error);
+  }
+};

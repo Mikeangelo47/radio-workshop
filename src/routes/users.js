@@ -74,4 +74,7 @@ router.patch(
 
 router.delete('/cards/:cardId', userController.deleteCard);
 
+// Redemption history
+router.get('/:userId/redemptions', userController.getUserRedemptions);
+
 module.exports = router;

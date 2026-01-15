@@ -3,6 +3,33 @@ const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
+// Log palm scan from palm device (for usage history)
+// Mounted at /api/palm, so full path is /api/palm/log-scan
+router.post('/log-scan', async (req, res) => {
+  try {
+    const { userId, deviceType, location, success } = req.body;
+    
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required' });
+    }
+    
+    const authLog = await prisma.authenticationLog.create({
+      data: {
+        userId,
+        deviceType: deviceType || 'palm',
+        location: location || 'Palm Device',
+        success: success !== false
+      }
+    });
+    
+    console.log(`[Palm] ✅ Scan logged for user ${userId}`);
+    res.status(201).json({ success: true, log: authLog });
+  } catch (error) {
+    console.error('[Palm] Error logging scan:', error);
+    res.status(500).json({ error: 'Failed to log scan' });
+  }
+});
+
 // Get all products
 router.get('/products', async (req, res) => {
   try {
@@ -323,7 +350,7 @@ router.post('/verifications/:id/complete', async (req, res) => {
     
     const data = await response.json();
     
-    // If verification succeeded, create redemption record
+    // If verification succeeded, create redemption record and log authentication
     if (data.success && data.session?.status === 'verified' && data.redemption) {
       const redemption = data.redemption;
       await prisma.redemption.create({
@@ -339,6 +366,38 @@ router.post('/verifications/:id/complete', async (req, res) => {
         }
       });
       console.log(`✓ Redemption logged for ${redemption.userName}: ${redemption.campaignName}`);
+      
+      // Also log to user's authentication history
+      try {
+        await prisma.authenticationLog.create({
+          data: {
+            userId: redemption.userId,
+            deviceType: 'palm',
+            location: location || 'Palm Device',
+            success: true
+          }
+        });
+        console.log(`✓ Authentication logged for user ${redemption.userId}`);
+      } catch (authLogError) {
+        console.error('Failed to log authentication:', authLogError);
+      }
+    }
+    
+    // Also log authentication for palm-verified scans even without redemption
+    if (data.success && palmVerified && userId) {
+      try {
+        await prisma.authenticationLog.create({
+          data: {
+            userId: userId,
+            deviceType: 'palm',
+            location: location || 'Palm Device',
+            success: true
+          }
+        });
+        console.log(`✓ Palm scan logged for user ${userId}`);
+      } catch (authLogError) {
+        console.error('Failed to log palm scan:', authLogError);
+      }
     }
     
     res.json(data);

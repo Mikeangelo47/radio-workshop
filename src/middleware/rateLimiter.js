@@ -40,19 +40,19 @@ const RATE_LIMITS = {
   // General API limits per IP
   default: {
     windowMs: 15 * 60 * 1000, // 15 minutes
-    maxRequests: 100,
+    maxRequests: 5000,
     message: 'Too many requests from this IP, please try again later'
   },
-  // Stricter limits for auth endpoints
+  // Auth endpoints - generous limits for registration/login
   auth: {
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    maxRequests: 10,
+    windowMs: 5 * 60 * 1000, // 5 minutes
+    maxRequests: 500,
     message: 'Too many authentication attempts, please try again later'
   },
   // Palm device endpoints (higher limits for devices)
   palmDevice: {
     windowMs: 1 * 60 * 1000, // 1 minute
-    maxRequests: 60,
+    maxRequests: 600,
     message: 'Rate limit exceeded for palm device'
   },
   // API key limits (per key)

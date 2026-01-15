@@ -8,6 +8,7 @@ const crypto = require('crypto');
 
 // Routes
 const userRoutes = require('./routes/users');
+const userCardRoutes = require('./routes/userCards');
 const palmRoutes = require('./routes/palm');
 const storeRoutes = require('./routes/store');
 const authRoutes = require('./routes/auth');
@@ -79,22 +80,53 @@ app.get('/', (req, res) => {
   res.redirect('/admin.html');
 });
 
+// Password reset page
+app.get('/reset-password', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/reset-password.html'));
+});
+
+// Email verification page
+app.get('/verify-email', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/verify-email.html'));
+});
+
 // OAuth 2.0 / OpenID Connect endpoints
 app.use('/oauth', oauthRoutes);
 app.use('/.well-known', oauthRoutes);
 
 // API v1 routes
 app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/users', userCardRoutes);  // Campaign card routes (same base path)
 app.use('/api/v1/palm', palmRoutes);
 app.use('/api/v1/store', storeRoutes);
 app.use('/api/v1/auth', authLimiter, authRoutes);
 app.use('/api/v2/auth', authLimiter, authFullRoutes);
 
 // Legacy API routes for web-admin compatibility
-app.use('/api/orders', storeRoutes);
+app.get('/api/orders', async (req, res) => {
+  const { PrismaClient } = require('@prisma/client');
+  const prisma = new PrismaClient();
+  try {
+    const { status } = req.query;
+    const where = status ? { status } : {};
+    const orders = await prisma.order.findMany({
+      where,
+      include: {
+        items: { include: { product: true } },
+        customer: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json({ orders });
+  } catch (error) {
+    console.error('Error fetching orders:', error);
+    res.status(500).json({ error: 'Failed to fetch orders', orders: [] });
+  }
+});
 app.use('/api/products', storeRoutes);
 app.use('/api/verifications', storeRoutes);  // Campaign verifications - same pattern as orders
 app.use('/api/palm-devices', palmRoutes);
+app.use('/api/v1/palm-devices', palmRoutes);  // Palm device endpoints (v1 path)
 app.use('/api/palm', storeRoutes);  // Palm device order completion
 app.use('/api/redemptions', storeRoutes);  // Redemption history
 

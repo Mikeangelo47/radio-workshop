@@ -152,6 +152,36 @@ exports.verifyPalm = async (req, res) => {
 };
 
 /**
+ * Report successful palm match from palm device
+ * Called after palm device successfully matches a user
+ */
+exports.reportMatch = async (req, res) => {
+  try {
+    const { userId, location, deviceId } = req.body;
+    
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required' });
+    }
+    
+    // Log to user's authentication history
+    const authLog = await prisma.authenticationLog.create({
+      data: {
+        userId,
+        deviceType: 'palm',
+        location: location || 'Palm Device',
+        success: true
+      }
+    });
+    
+    console.log(`[Palm] ✅ Match logged for user ${userId}`);
+    res.status(201).json({ success: true, log: authLog });
+  } catch (error) {
+    console.error('[Palm] Error logging match:', error);
+    res.status(500).json({ error: 'Failed to log match' });
+  }
+};
+
+/**
  * Log authentication attempt from palm device
  * For tracking failed/successful scans
  */
@@ -214,19 +244,37 @@ exports.logAuthAttempt = async (req, res, next) => {
       return res.status(401).json({ error: 'Invalid token' });
     }
 
-    const { deviceType, location, success, reason } = req.body;
+    const { deviceType, location, success, reason, userId } = req.body;
     
-    // Log the auth attempt
+    // Log the device-level auth attempt
     const authLog = await prisma.deviceAuthenticationLog.create({
       data: {
         palmDeviceId: device.id,
         deviceType: deviceType || 'palm',
-        location: location || 'Unknown',
+        location: location || device.location || 'Unknown',
         success: success || false,
         reason: reason || 'Authentication failed',
         timestamp: new Date()
       }
     });
+
+    // If successful and userId provided, also log to user's authentication history
+    if (success && userId) {
+      try {
+        await prisma.authenticationLog.create({
+          data: {
+            userId: userId,
+            deviceType: deviceType || 'palm',
+            location: device.location || location || 'Palm Device',
+            success: true
+          }
+        });
+        console.log(`[Palm] ✅ Logged authentication for user ${userId}`);
+      } catch (userLogError) {
+        console.error(`[Palm] ⚠️ Failed to log user authentication:`, userLogError);
+        // Don't fail the request if user log fails
+      }
+    }
 
     res.json({ success: true, log: authLog });
   } catch (error) {

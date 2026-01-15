@@ -23,11 +23,12 @@
 
 const express = require('express');
 const router = express.Router();
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { PrismaClient } = require('@prisma/client');
 const { body, validationResult } = require('express-validator');
+const { Resend } = require('resend');
 
 const prisma = new PrismaClient();
 
@@ -201,7 +202,7 @@ function getDeviceInfo(req) {
 
 const EmailService = {
   /**
-   * Send verification email
+   * Send verification email using Resend
    */
   async sendVerificationEmail(email, token) {
     const verifyUrl = `${process.env.APP_URL || 'https://yourapp.com'}/verify-email?token=${token}`;
@@ -209,33 +210,36 @@ const EmailService = {
     console.log(`[Email] 📧 Verification email to ${email}`);
     console.log(`[Email] Verify URL: ${verifyUrl}`);
     
-    // In production, integrate with SendGrid/Mailgun/SES
-    if (process.env.NODE_ENV === 'production' && process.env.EMAIL_USER) {
-      const nodemailer = require('nodemailer');
-      const transporter = nodemailer.createTransport({
-        service: process.env.EMAIL_SERVICE || 'gmail',
-        auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASSWORD
+    // Send emails via Resend in production
+    if (process.env.NODE_ENV === 'production' && process.env.RESEND_API_KEY) {
+      try {
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        
+        const { data, error } = await resend.emails.send({
+          from: process.env.EMAIL_FROM || 'Palm Auth <noreply@resend.dev>',
+          to: email,
+          subject: 'Verify Your Email - Palm Auth',
+          html: `
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+              <h1 style="color: #0f172a;">Verify Your Email</h1>
+              <p>Click the button below to verify your email address:</p>
+              <a href="${verifyUrl}" style="display: inline-block; background: #0f766e; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; margin: 20px 0;">
+                Verify Email
+              </a>
+              <p style="color: #64748b; font-size: 14px;">This link expires in 24 hours.</p>
+              <p style="color: #94a3b8; font-size: 12px;">If you didn't create an account, you can safely ignore this email.</p>
+            </div>
+          `
+        });
+        
+        if (error) {
+          console.error(`[Email] ❌ Resend API error:`, error);
+        } else {
+          console.log(`[Email] ✅ Verification email sent to ${email}, id: ${data?.id}`);
         }
-      });
-      
-      await transporter.sendMail({
-        from: process.env.EMAIL_USER,
-        to: email,
-        subject: 'Verify Your Email - Palm Auth',
-        html: `
-          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-            <h1 style="color: #0f172a;">Verify Your Email</h1>
-            <p>Click the button below to verify your email address:</p>
-            <a href="${verifyUrl}" style="display: inline-block; background: #0f766e; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; margin: 20px 0;">
-              Verify Email
-            </a>
-            <p style="color: #64748b; font-size: 14px;">This link expires in 24 hours.</p>
-            <p style="color: #94a3b8; font-size: 12px;">If you didn't create an account, you can safely ignore this email.</p>
-          </div>
-        `
-      });
+      } catch (error) {
+        console.error(`[Email] ❌ Failed to send verification email:`, error);
+      }
     }
     
     return true;
@@ -250,32 +254,30 @@ const EmailService = {
     console.log(`[Email] 📧 Password reset email to ${email}`);
     console.log(`[Email] Reset URL: ${resetUrl}`);
     
-    if (process.env.NODE_ENV === 'production' && process.env.EMAIL_USER) {
-      const nodemailer = require('nodemailer');
-      const transporter = nodemailer.createTransport({
-        service: process.env.EMAIL_SERVICE || 'gmail',
-        auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASSWORD
-        }
-      });
-      
-      await transporter.sendMail({
-        from: process.env.EMAIL_USER,
-        to: email,
-        subject: 'Reset Your Password - Palm Auth',
-        html: `
-          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-            <h1 style="color: #0f172a;">Reset Your Password</h1>
-            <p>You requested a password reset. Click the button below to set a new password:</p>
-            <a href="${resetUrl}" style="display: inline-block; background: #0f766e; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; margin: 20px 0;">
-              Reset Password
-            </a>
-            <p style="color: #64748b; font-size: 14px;">This link expires in 15 minutes.</p>
-            <p style="color: #94a3b8; font-size: 12px;">If you didn't request this, you can safely ignore this email.</p>
-          </div>
-        `
-      });
+    if (process.env.NODE_ENV === 'production' && process.env.RESEND_API_KEY) {
+      try {
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        
+        await resend.emails.send({
+          from: process.env.EMAIL_FROM || 'Palm Auth <noreply@resend.dev>',
+          to: email,
+          subject: 'Reset Your Password - Palm Auth',
+          html: `
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+              <h1 style="color: #0f172a;">Reset Your Password</h1>
+              <p>You requested a password reset. Click the button below to set a new password:</p>
+              <a href="${resetUrl}" style="display: inline-block; background: #0f766e; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; margin: 20px 0;">
+                Reset Password
+              </a>
+              <p style="color: #64748b; font-size: 14px;">This link expires in 15 minutes.</p>
+              <p style="color: #94a3b8; font-size: 12px;">If you didn't request this, you can safely ignore this email.</p>
+            </div>
+          `
+        });
+        console.log(`[Email] ✅ Password reset email sent to ${email}`);
+      } catch (error) {
+        console.error(`[Email] ❌ Failed to send password reset email:`, error);
+      }
     }
     
     return true;
@@ -353,21 +355,27 @@ router.post('/register', validateRegister, async (req, res) => {
       });
     }
     
-    // Check if email or username already exists
-    const existingUser = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { email: email.toLowerCase() },
-          { username: username.toLowerCase() }
-        ]
-      }
+    // Check if email already exists
+    const existingEmail = await prisma.user.findFirst({
+      where: { email: email.toLowerCase() }
     });
     
-    if (existingUser) {
-      // Generic message to prevent user enumeration
+    if (existingEmail) {
       return res.status(400).json({
         success: false,
-        message: 'Unable to create account with provided credentials'
+        message: 'Email is already registered'
+      });
+    }
+    
+    // Check if username already exists
+    const existingUsername = await prisma.user.findFirst({
+      where: { username: username.toLowerCase() }
+    });
+    
+    if (existingUsername) {
+      return res.status(400).json({
+        success: false,
+        message: 'Username is already taken'
       });
     }
     

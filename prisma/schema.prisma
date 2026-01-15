@@ -276,3 +276,27 @@ model DeviceAuthenticationLog {
   @@index([timestamp])
   @@map("device_authentication_logs")
 }
+
+// Campaign Cards - wallet cards from BIOPIA Campaign Portal
+model UserCard {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  campaignId      String   @map("campaign_id")
+  cardName        String   @map("card_name")
+  cardDescription String?  @map("card_description") @db.Text
+  cardImageUrl    String?  @map("card_image_url") @db.Text
+  backgroundColor String   @default("#1a1a2e") @map("background_color")
+  textColor       String   @default("#ffffff") @map("text_color")
+  discountType    String   @default("PERCENTAGE") @map("discount_type")
+  discountValue   Int      @default(0) @map("discount_value")
+  vendorName      String?  @map("vendor_name")
+  vendorLogo      String?  @map("vendor_logo") @db.Text
+  active          Boolean  @default(true)
+  addedAt         DateTime @default(now()) @map("added_at")
+  lastUsedAt      DateTime? @map("last_used_at")
+  
+  @@unique([userId, campaignId])
+  @@index([userId])
+  @@index([campaignId])
+  @@map("user_cards")
+}
