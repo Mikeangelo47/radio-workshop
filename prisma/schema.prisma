@@ -291,6 +291,7 @@ model UserCard {
   discountValue   Int      @default(0) @map("discount_value")
   vendorName      String?  @map("vendor_name")
   vendorLogo      String?  @map("vendor_logo") @db.Text
+  userCoverImageURL String? @map("user_cover_image_url") @db.Text
   active          Boolean  @default(true)
   addedAt         DateTime @default(now()) @map("added_at")
   lastUsedAt      DateTime? @map("last_used_at")
