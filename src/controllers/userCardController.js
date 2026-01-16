@@ -73,7 +73,8 @@ exports.addCardToWallet = async (req, res, next) => {
     const discountType = campaignData?.discountType || 'PERCENTAGE';
     const discountValue = campaignData?.discountValue || 0;
     const vendorName = campaignData?.business?.name || 'BIOPIA Partner';
-    const vendorLogo = campaignData?.business?.logo || null;
+    // Use campaign design logo first, fall back to business logo
+    const vendorLogo = campaignData?.design?.logoUrl || campaignData?.business?.logo || null;
     const cardImageUrl = campaignData?.design?.coverImageUrl || null;
 
     const newCard = await prisma.userCard.create({
