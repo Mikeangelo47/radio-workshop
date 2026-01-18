@@ -301,3 +301,275 @@ model UserCard {
   @@index([campaignId])
   @@map("user_cards")
 }
+
+// ============================================
+// DEVICE CONTENT MANAGEMENT (Ads/Announcements)
+// ============================================
+
+// Content Device Registration (for ads/media playback)
+model ContentDevice {
+  id              String    @id @default(uuid())
+  deviceId        String    @unique @map("device_id")
+  model           String?
+  screenWidth     Int       @default(800) @map("screen_width")
+  screenHeight    Int       @default(480) @map("screen_height")
+  supportsVideo   Boolean   @default(true) @map("supports_video")
+  lastSeen        DateTime  @default(now()) @map("last_seen")
+  cachedContentIds String[] @default([]) @map("cached_content_ids")
+  lastPlaybackReport DateTime? @map("last_playback_report")
+  deviceGroupId   String?   @map("device_group_id")
+  deviceGroup     ContentDeviceGroup? @relation(fields: [deviceGroupId], references: [id])
+  createdAt       DateTime  @default(now()) @map("created_at")
+  
+  @@index([deviceId])
+  @@index([deviceGroupId])
+  @@map("content_devices")
+}
+
+// Device Groups (for bulk playlist assignment)
+model ContentDeviceGroup {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  devices     ContentDevice[]
+  playlists   Playlist[]
+  createdAt   DateTime  @default(now()) @map("created_at")
+  
+  @@map("content_device_groups")
+}
+
+// Content Items (images, videos, messages)
+model ContentItem {
+  id          String    @id @default(uuid())
+  type        String    // 'image', 'video', 'message'
+  title       String
+  url         String    @db.Text
+  posterUrl   String?   @map("poster_url") @db.Text
+  durationSec Int       @default(10) @map("duration_sec")
+  width       Int       @default(800)
+  height      Int       @default(480)
+  mimeType    String    @default("image/webp") @map("mime_type")
+  sizeBytes   Int       @default(0) @map("size_bytes")
+  checksum    String?
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  playlistItems PlaylistItem[]
+  variants    ContentVariant[]
+  playbackLogs PlaybackLog[]
+  
+  @@index([type])
+  @@map("content_items")
+}
+
+// Content Variants (different resolutions/formats)
+model ContentVariant {
+  id          String    @id @default(uuid())
+  contentId   String    @map("content_id")
+  content     ContentItem @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  url         String    @db.Text
+  width       Int
+  height      Int
+  mimeType    String    @map("mime_type")
+  sizeBytes   Int       @map("size_bytes")
+  checksum    String?
+  
+  @@index([contentId])
+  @@map("content_variants")
+}
+
+// Playlists (assigned to devices or device groups)
+model Playlist {
+  id            String    @id @default(uuid())
+  name          String
+  deviceId      String?   @map("device_id")
+  deviceGroupId String?   @map("device_group_id")
+  deviceGroup   ContentDeviceGroup? @relation(fields: [deviceGroupId], references: [id])
+  version       Int       @default(1)
+  active        Boolean   @default(true)
+  items         PlaylistItem[]
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  
+  @@index([deviceId])
+  @@index([deviceGroupId])
+  @@map("playlists")
+}
+
+// Playlist Items (content in a playlist with scheduling)
+model PlaylistItem {
+  id          String    @id @default(uuid())
+  playlistId  String    @map("playlist_id")
+  playlist    Playlist  @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  contentId   String    @map("content_id")
+  content     ContentItem @relation(fields: [contentId], references: [id])
+  priority    Int       @default(0)
+  durationSec Int?      @map("duration_sec")
+  startAt     DateTime? @map("start_at")
+  endAt       DateTime? @map("end_at")
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  
+  @@index([playlistId])
+  @@index([contentId])
+  @@map("playlist_items")
+}
+
+// Playback Logs (analytics)
+model PlaybackLog {
+  id             String    @id @default(uuid())
+  deviceId       String    @map("device_id")
+  contentId      String    @map("content_id")
+  content        ContentItem @relation(fields: [contentId], references: [id])
+  playedAt       DateTime  @default(now()) @map("played_at")
+  durationPlayed Int       @default(0) @map("duration_played")
+  completed      Boolean   @default(false)
+  error          String?
+  
+  @@index([deviceId])
+  @@index([contentId])
+  @@index([playedAt])
+  @@map("playback_logs")
+}
+
+// ============================================================
+// BIOPIAT DISPLAY SYSTEM MODELS
+// ============================================================
+
+// Display Device (BIOPIAT devices with bottom-half display)
+model DisplayDevice {
+  id                     String    @id @default(uuid())
+  deviceId               String    @unique @map("device_id")
+  name                   String
+  location               String?
+  model                  String?
+  screenWidth            Int?      @map("screen_width")
+  screenHeight           Int?      @map("screen_height")
+  appVersion             String?   @map("app_version")
+  lastSeen               DateTime? @map("last_seen")
+  lastSync               DateTime? @map("last_sync")
+  currentPlaylistVersion Int?      @map("current_playlist_version")
+  groupId                String?   @map("group_id")
+  group                  DisplayDeviceGroup? @relation(fields: [groupId], references: [id])
+  playlistId             String?   @map("playlist_id")
+  playlist               DisplayPlaylist? @relation(fields: [playlistId], references: [id])
+  logs                   DisplayDeviceLog[]
+  urgentMessages         DisplayUrgentMessage[]
+  createdAt              DateTime  @default(now()) @map("created_at")
+  
+  @@index([groupId])
+  @@index([lastSeen])
+  @@map("display_devices")
+}
+
+// Display Device Group
+model DisplayDeviceGroup {
+  id             String    @id @default(uuid())
+  name           String
+  description    String?
+  devices        DisplayDevice[]
+  playlists      DisplayPlaylist[]
+  urgentMessages DisplayUrgentMessage[]
+  createdAt      DateTime  @default(now()) @map("created_at")
+  
+  @@map("display_device_groups")
+}
+
+// Display Content (images, videos, text for bottom-half display)
+model DisplayContent {
+  id          String    @id @default(uuid())
+  type        String    // 'image', 'video', 'text'
+  title       String
+  body        String?
+  url         String?
+  posterUrl   String?   @map("poster_url")
+  durationSec Int       @default(10) @map("duration_sec")
+  startAt     DateTime? @map("start_at")
+  endAt       DateTime? @map("end_at")
+  priority    Int       @default(0)
+  tags        String[]
+  checksum    String?
+  sizeBytes   Int?      @map("size_bytes")
+  mimeType    String?   @map("mime_type")
+  width       Int?
+  height      Int?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  playlistItems DisplayPlaylistItem[]
+  
+  @@index([type])
+  @@map("display_content")
+}
+
+// Display Playlist
+model DisplayPlaylist {
+  id            String    @id @default(uuid())
+  name          String
+  description   String?
+  version       Int       @default(1)
+  active        Boolean   @default(false)
+  deviceGroupId String?   @map("device_group_id")
+  deviceGroup   DisplayDeviceGroup? @relation(fields: [deviceGroupId], references: [id])
+  deviceId      String?   @map("device_id")
+  items         DisplayPlaylistItem[]
+  devices       DisplayDevice[]
+  publishedAt   DateTime? @map("published_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  
+  @@index([deviceGroupId])
+  @@index([active])
+  @@map("display_playlists")
+}
+
+// Display Playlist Item
+model DisplayPlaylistItem {
+  id          String    @id @default(uuid())
+  playlistId  String    @map("playlist_id")
+  playlist    DisplayPlaylist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  contentId   String    @map("content_id")
+  content     DisplayContent @relation(fields: [contentId], references: [id])
+  order       Int       @default(0)
+  durationSec Int?      @map("duration_sec")
+  startAt     DateTime? @map("start_at")
+  endAt       DateTime? @map("end_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  
+  @@index([playlistId])
+  @@index([contentId])
+  @@map("display_playlist_items")
+}
+
+// Display Device Log
+model DisplayDeviceLog {
+  id        String   @id @default(uuid())
+  deviceId  String   @map("device_id")
+  device    DisplayDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  type      String   // 'playlist_ack', 'error', 'playback', etc.
+  data      Json?
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  @@index([deviceId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("display_device_logs")
+}
+
+// Display Urgent Message
+model DisplayUrgentMessage {
+  id            String    @id @default(uuid())
+  title         String
+  body          String
+  priority      Int       @default(10)
+  deviceGroupId String?   @map("device_group_id")
+  deviceGroup   DisplayDeviceGroup? @relation(fields: [deviceGroupId], references: [id])
+  deviceId      String?   @map("device_id")
+  device        DisplayDevice? @relation(fields: [deviceId], references: [id])
+  expiresAt     DateTime  @map("expires_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  
+  @@index([deviceGroupId])
+  @@index([deviceId])
+  @@index([expiresAt])
+  @@map("display_urgent_messages")
+}

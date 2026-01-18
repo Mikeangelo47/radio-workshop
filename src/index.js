@@ -15,6 +15,8 @@ const storeRoutes = require('./routes/store');
 const authRoutes = require('./routes/auth');
 const authFullRoutes = require('./routes/auth-full');
 const oauthRoutes = require('./routes/oauth');
+const deviceContentRoutes = require('./routes/deviceContent');
+const biopiatDisplayRoutes = require('./routes/biopiatDisplay');
 
 // Middleware
 const errorHandler = require('./middleware/errorHandler');
@@ -131,6 +133,12 @@ app.use('/api/palm-devices', palmRoutes);
 app.use('/api/v1/palm-devices', palmRoutes);  // Palm device endpoints (v1 path)
 app.use('/api/palm', storeRoutes);  // Palm device order completion
 app.use('/api/redemptions', storeRoutes);  // Redemption history
+
+// Device Content API (ads, announcements, media for palm devices)
+app.use('/api/device-content/v1', deviceContentRoutes);
+
+// BIOPIAT Display System API (bottom-half display panel)
+app.use('/api/biopiat-display/v1', biopiatDisplayRoutes);
 
 // 404 handler for API routes only
 app.use('/api', (req, res) => {
