@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Email - Palm Auth</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+        
+        .logo-icon {
+            width: 80px;
+            height: 80px;
+            background: #0f766e;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+        }
+        
+        .logo-icon svg {
+            width: 40px;
+            height: 40px;
+            fill: white;
+        }
+        
+        .logo-icon.success {
+            background: #d1fae5;
+        }
+        
+        .logo-icon.success svg {
+            fill: #065f46;
+        }
+        
+        .logo-icon.error {
+            background: #fee2e2;
+        }
+        
+        .logo-icon.error svg {
+            fill: #991b1b;
+        }
+        
+        .logo-icon.loading {
+            background: #e0f2fe;
+        }
+        
+        .logo-icon.loading svg {
+            fill: #0369a1;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        h1 {
+            color: #0f172a;
+            font-size: 24px;
+            margin-bottom: 12px;
+        }
+        
+        .subtitle {
+            color: #64748b;
+            font-size: 16px;
+            line-height: 1.5;
+            margin-bottom: 24px;
+        }
+        
+        .message {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .message.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .message.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 14px 28px;
+            background: #0f766e;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        
+        .btn:hover {
+            background: #0d6560;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Loading State -->
+        <div id="loadingState">
+            <div class="logo-icon loading">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
+                </svg>
+            </div>
+            <h1>Verifying Your Email</h1>
+            <p class="subtitle">Please wait while we verify your email address...</p>
+        </div>
+        
+        <!-- Success State -->
+        <div id="successState" class="hidden">
+            <div class="logo-icon success">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                </svg>
+            </div>
+            <h1>Email Verified!</h1>
+            <p class="subtitle">Your email has been successfully verified. You can now use all features of the app.</p>
+            <p style="color: #64748b; font-size: 14px;">You can close this page and return to the app.</p>
+        </div>
+        
+        <!-- Error State -->
+        <div id="errorState" class="hidden">
+            <div class="logo-icon error">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+            </div>
+            <h1>Verification Failed</h1>
+            <p class="subtitle" id="errorMessage">The verification link is invalid or has expired.</p>
+            <a href="#" class="btn" onclick="requestNewLink()">Request New Link</a>
+        </div>
+        
+        <!-- No Token State -->
+        <div id="noTokenState" class="hidden">
+            <div class="logo-icon error">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+            </div>
+            <h1>Invalid Link</h1>
+            <p class="subtitle">This verification link is missing required information. Please use the link from your email.</p>
+        </div>
+    </div>
+    
+    <script>
+        const loadingState = document.getElementById('loadingState');
+        const successState = document.getElementById('successState');
+        const errorState = document.getElementById('errorState');
+        const noTokenState = document.getElementById('noTokenState');
+        const errorMessage = document.getElementById('errorMessage');
+        
+        // Get token from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        
+        function showState(state) {
+            loadingState.classList.add('hidden');
+            successState.classList.add('hidden');
+            errorState.classList.add('hidden');
+            noTokenState.classList.add('hidden');
+            state.classList.remove('hidden');
+        }
+        
+        function requestNewLink() {
+            // Redirect to app or show instructions
+            alert('Please open the Palm Auth app and request a new verification email from your profile settings.');
+        }
+        
+        async function verifyEmail() {
+            if (!token) {
+                showState(noTokenState);
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/v2/auth/verify-email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ token })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    showState(successState);
+                } else {
+                    errorMessage.textContent = data.message || 'The verification link is invalid or has expired.';
+                    showState(errorState);
+                }
+            } catch (error) {
+                console.error('Verification error:', error);
+                errorMessage.textContent = 'An error occurred while verifying your email. Please try again.';
+                showState(errorState);
+            }
+        }
+        
+        // Start verification on page load
+        verifyEmail();
+    </script>
+</body>
+</html>
